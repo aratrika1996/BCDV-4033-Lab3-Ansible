@@ -1,0 +1,51 @@
+---
+- hosts: all
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: Ensure apt-transport-https is installed
+      apt:
+        name: apt-transport-https
+        state: present
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Node.js dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - curl
+        - software-properties-common
+
+    - name: Add NodeSource repository
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_14.x {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: yes
+        filename: nodesource
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        allow_unauthenticated: yes
+
+    - name: Install build-essential
+      apt:
+        name: build-essential
+        state: present
+
+    - name: Check Node.js version
+      command: node --version
+      register: node_version_output
+
+    - name: Check npm version
+      command: npm --version
+      register: npm_version_output
+
+    - name: Display Node.js and npm versions
+      debug:
+        msg: "Node.js version: {{ node_version_output.stdout }} | npm version: {{ npm_version_output.stdout }}"
